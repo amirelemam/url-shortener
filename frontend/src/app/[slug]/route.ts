@@ -9,8 +9,13 @@ export async function GET(
 ) {
   const { slug } = context.params;
 
-  return NextResponse.redirect(
-    `${process.env.NEXT_PUBLIC_API_URL}/${slug}`,
-    { status: 307 }
-  );
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/short/${slug}`);
+
+  if (res.status === 404) {
+    return new NextResponse("Not Found", { status: 404 });
+  }
+
+  return NextResponse.redirect(`${process.env.NEXT_PUBLIC_API_URL}/short/${slug}`, {
+    status: 307,
+  });
 }

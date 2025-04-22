@@ -101,7 +101,7 @@ export class UrlsController {
       return res.redirect(HttpStatus.MOVED_PERMANENTLY, url.longUrl);
     } catch (error) {
       if (error instanceof NotFoundException) {
-        return res.redirect(HttpStatus.MOVED_PERMANENTLY, "http://localhost:3000/b4kCpm");
+        return res.status(HttpStatus.NOT_FOUND).send("Not Found");
       }
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send("Server error");
     }
