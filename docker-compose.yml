@@ -1,0 +1,63 @@
+version: '3.9'
+
+networks:
+  deep_origin:
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: mypass
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - deep_origin
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: url-backend
+    ports:
+      - '3001:3001'
+    environment:
+      DATABASE_URL: 'postgresql://postgres:mypass@db:5432/postgres?schema=public&pool_max=20'
+      JWT_SECRET: 'l308qHxT41xg'
+      BASE_URL: 'http://backend:3001'
+      JWT_EXPIRES_IN: '1h'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "require(''http'').get(''http://localhost:3001/api/health'',(res)=>process.exit(res.statusCode===200?0:1)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks:
+      - deep_origin
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: url-frontend
+    ports:
+      - '3000:3000'
+    environment:
+      NEXT_PUBLIC_API_URL: 'http://backend:3001'
+    networks:
+      - deep_origin
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  db-data:
